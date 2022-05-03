@@ -1,5 +1,5 @@
 import React from 'react';
-import Tables from './components/table'
+import Tables from './components/productList'
 import ReactDOM from 'react-dom/client';
 import './index.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
