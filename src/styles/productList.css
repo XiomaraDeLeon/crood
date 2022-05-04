@@ -9,3 +9,8 @@
 .buttonsProducts{
     width: 200px;
 }
+
+.botonesAgregar{
+    display: flex;
+    justify-content: space-between;
+}
