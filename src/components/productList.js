@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Button, Modal, InputGroup, FormControl } from 'react-bootstrap';
+import { Table, Button, Modal, InputGroup, FormControl, Form } from 'react-bootstrap';
 import axios from 'axios';
 import '../styles/productList.css'
 
@@ -13,22 +13,20 @@ const Tables = () => {
     const [modalEdit, setModalEdit] = useState(false);
     const [editar, setEditar] = useState('')
     const [state, setState] = React.useState({ title: '', price: '', description: '', categoryId: 1, images: [] });
-
     const [products, setProducts] = useState()
+    const [validated, setValidated] = useState(false);
 
-    const getData = async () => {
-        const response = await axios(API)
-        setProducts(response.data)
-    }
-    useEffect(() => {
-        getData()
-    }, [])
+
 
     // fin de estados
 
 
     // funciones que apertura y cierre de los modals
-    const handleClose = () => setShow(false);
+    const handleClose = () => {
+        setShow(false);
+        setValidated(false);
+    }
+
     const handleShow = () => {
         setShow(true)
         setState(({ title: '', price: '', description: '', categoryId: 1, images: [] }))
@@ -36,6 +34,42 @@ const Tables = () => {
     const handleCloseOK = () => setModal(false);
     const handleCloseEdit = () => setModalEdit(false);
     // fin funciones que apertura y cierre de los modals
+
+
+    // funcion que evita recargar la pagina
+    const getData = async () => {
+        const response = await axios(API)
+        setProducts(response.data)
+    }
+    useEffect(() => {
+        getData()
+    }, [])
+    // fin de la funcion que evita recargar la pagina
+
+
+    // validacon de formularios
+    const handleSubmit = (event) => {
+        const form = event.currentTarget;
+        event.preventDefault();
+
+        if(form.checkValidity() === false){
+            event.stopPropagation();
+            setValidated(true)
+        }
+        else{
+            axios.post(API, state)
+            .then(function (response) {
+                getData()
+                console.log(response);
+            })
+            .catch(function (error) {
+                console.log(error);
+            });
+            setShow(false)
+        }
+
+    }
+    // fin de validacion de formularios
 
 
     // clonando el estado
@@ -50,23 +84,6 @@ const Tables = () => {
         setState(addProduct)
     }
     // fin de la funcion que obtiene los valores del input
-
-
-    // funcion que agrega un nuevo producto
-    function add() {
-        axios.post(API, state)
-            .then(function (response) {
-                getData()
-                console.log(response);
-            })
-            .catch(function (error) {
-                console.log(error);
-            });
-        setShow(false)
-
-    }
-    // fin de la funcion que agrega un nuevo producto
-
 
     // funcion que abre el modal eliminar y funcion que elimina el producto
     function eliminar(id) {
@@ -98,8 +115,16 @@ const Tables = () => {
         setState({ title: response.data.title, price: response.data.price, description: response.data.description, categoryId: 1, images: response.data.images })
     }
 
-    function confirmEdit(id) {
-        axios.put(`${API}${id}`, state)
+    function confirmEdit(event, id) {
+        const form = event.currentTarget;
+        event.preventDefault();
+
+        if(form.checkValidity() === false){
+            event.stopPropagation();
+            setValidated(true)
+        }
+        else{
+            axios.put(`${API}${id}`, state)
             .then(function (response) {
                 getData()
                 console.log(response);
@@ -108,6 +133,8 @@ const Tables = () => {
                 console.log(error);
             });
         setModalEdit(false)
+        }
+
     }
     // fin de la funcion que abre el modal de editar y funcion que edita un producto
 
@@ -117,6 +144,7 @@ const Tables = () => {
                 <thead>
                     <tr>
                         <th>Codigo</th>
+                        <th>Imagen</th>
                         <th>Titulo</th>
                         <th>Precio</th>
                         <th>Descripcion</th>
@@ -142,59 +170,67 @@ const Tables = () => {
                     <Modal.Title>Agregar un nuevo producto</Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
-                    <p>Ingrese el nombre del producto</p>
-                    <InputGroup className="mb-3">
-                        <FormControl
-                            name="title"
-                            value={state.title}
-                            onChange={onChangeInput}
-                            placeholder="Nombre del producto"
-                            aria-label="Nombre del producto"
-                            aria-describedby="basic-addon1"
-                        />
-                    </InputGroup>
-                    <p>Ingrese el precio del producto</p>
-                    <InputGroup className="mb-3">
-                        <FormControl
-                            name="price"
-                            value={state.price}
-                            onChange={onChangeInput}
-                            placeholder="Precio del producto"
-                            aria-label="Precio del producto"
-                            aria-describedby="basic-addon1"
-                        />
-                    </InputGroup>
-                    <p>Ingrese una pequeña descripcion del producto</p>
-                    <InputGroup className="mb-3">
-                        <FormControl
-                            name="description"
-                            value={state.description}
-                            onChange={onChangeInput}
-                            placeholder="Descripcion del producto"
-                            aria-label="Descripcion del producto"
-                            aria-describedby="basic-addon1"
-                        />
-                    </InputGroup>
-                    <p>Ingrese la URL del producto que desea ingresar</p>
-                    <InputGroup className="mb-3">
-                        <FormControl
-                            name="images"
-                            value={state.images}
-                            onChange={onChangeInput}
-                            placeholder="Precio del producto"
-                            aria-label="Precio del producto"
-                            aria-describedby="basic-addon1"
-                        />
-                    </InputGroup>
+                    <Form noValidate validated={validated} onSubmit={handleSubmit}>
+                        <p>Ingrese el nombre del producto</p>
+                        <InputGroup hasValidation className="mb-3">
+                            <FormControl
+                                name="title"
+                                value={state.title}
+                                onChange={onChangeInput}
+                                placeholder="Nombre del producto"
+                                aria-label="Nombre del producto"
+                                aria-describedby="basic-addon1"
+                                required
+                            />
+                        </InputGroup>
+                        <p>Ingrese el precio del producto</p>
+                        <InputGroup className="mb-3">
+                            <FormControl
+                                name="price"
+                                value={state.price}
+                                onChange={onChangeInput}
+                                placeholder="Precio del producto"
+                                aria-label="Precio del producto"
+                                aria-describedby="basic-addon1"
+                                required
+                                type= "number"
+                            />
+                        </InputGroup>
+                        <p>Ingrese una pequeña descripcion del producto</p>
+                        <InputGroup className="mb-3">
+                            <FormControl
+                                name="description"
+                                value={state.description}
+                                onChange={onChangeInput}
+                                placeholder="Descripcion del producto"
+                                aria-label="Descripcion del producto"
+                                aria-describedby="basic-addon1"
+                                required
+                            />
+                        </InputGroup>
+                        <p>Ingrese la URL del producto que desea ingresar</p>
+                        <InputGroup className="mb-3">
+                            <FormControl
+                                name="images"
+                                value={state.images}
+                                onChange={onChangeInput}
+                                placeholder="URL de la imagen del producto"
+                                aria-label="URL de la imagen del producto"
+                                aria-describedby="basic-addon1"
+                                required
+                            />
+                        </InputGroup>
+                        <div className="botonesAgregar">
+                            <Button type="submit" variant="primary">
+                                Save Changes
+                            </Button>
+
+                            <Button variant="secondary" onClick={handleClose}>
+                                Close
+                            </Button>
+                        </div>
+                    </Form>
                 </Modal.Body>
-                <Modal.Footer>
-                    <Button variant="secondary" onClick={handleClose}>
-                        Close
-                    </Button>
-                    <Button variant="primary" onClick={add}>
-                        Save Changes
-                    </Button>
-                </Modal.Footer>
             </Modal>
             <Button onClick={handleShow} variant="info">Agregar Nuevo Producto</Button>
 
@@ -204,7 +240,7 @@ const Tables = () => {
                 backdrop="static"
                 keyboard={false}
             >
-                <Modal.Header closeButton>
+                <Modal.Header>
                     <Modal.Title>Modal title</Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
@@ -228,57 +264,66 @@ const Tables = () => {
                     <Modal.Title>Editar el producto</Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
-                    <p>Ingrese el nombre del producto</p>
-                    <InputGroup className="mb-3">
-                        <FormControl
-                            name="title"
-                            value={state.title}
-                            onChange={onChangeInput}
-                            placeholder="Nombre del producto"
-                            aria-label="Nombre del producto"
-                            aria-describedby="basic-addon1"
-                        />
-                    </InputGroup>
-                    <p>Ingrese el precio del producto</p>
-                    <InputGroup className="mb-3">
-                        <FormControl
-                            name="price"
-                            value={state.price}
-                            onChange={onChangeInput}
-                            placeholder="Precio del producto"
-                            aria-label="Precio del producto"
-                            aria-describedby="basic-addon1"
-                        />
-                    </InputGroup>
-                    <p>Ingrese una pequeña descripcion del producto</p>
-                    <InputGroup className="mb-3">
-                        <FormControl
-                            name="description"
-                            value={state.description}
-                            onChange={onChangeInput}
-                            placeholder="Descripcion del producto"
-                            aria-label="Descripcion del producto"
-                            aria-describedby="basic-addon1"
-                        />
-                    </InputGroup>
-                    <p>Ingrese la URL del producto que desea ingresar</p>
-                    <InputGroup className="mb-3">
-                        <FormControl
-                            name="images"
-                            value={state.images}
-                            onChange={onChangeInput}
-                            placeholder="Precio del producto"
-                            aria-label="Precio del producto"
-                            aria-describedby="basic-addon1"
-                        />
-                    </InputGroup>
+                    <Form noValidate validated={validated} onSubmit={(event) => {
+                            event.preventDefault()
+                            confirmEdit(event, editar)}
+                        }>
+                        <p>Ingrese el nombre del producto</p>
+                        <InputGroup hasValidation className="mb-3">
+                            <FormControl
+                                name="title"
+                                value={state.title}
+                                onChange={onChangeInput}
+                                placeholder="Nombre del producto"
+                                aria-label="Nombre del producto"
+                                aria-describedby="basic-addon1"
+                                required
+                            />
+                        </InputGroup>
+                        <p>Ingrese el precio del producto</p>
+                        <InputGroup className="mb-3">
+                            <FormControl
+                                name="price"
+                                value={state.price}
+                                onChange={onChangeInput}
+                                placeholder="Precio del producto"
+                                aria-label="Precio del producto"
+                                aria-describedby="basic-addon1"
+                                required
+                            />
+                        </InputGroup>
+                        <p>Ingrese una pequeña descripcion del producto</p>
+                        <InputGroup className="mb-3">
+                            <FormControl
+                                name="description"
+                                value={state.description}
+                                onChange={onChangeInput}
+                                placeholder="Descripcion del producto"
+                                aria-label="Descripcion del producto"
+                                aria-describedby="basic-addon1"
+                                required
+                            />
+                        </InputGroup>
+                        <p>Ingrese la URL del producto que desea ingresar</p>
+                        <InputGroup className="mb-3">
+                            <FormControl
+                                name="images"
+                                value={state.images}
+                                onChange={onChangeInput}
+                                placeholder="URL de la imagen del producto"
+                                aria-label="URL de la imagen del producto"
+                                aria-describedby="basic-addon1"
+                                required
+                            />
+                        </InputGroup>
+                        <div className="botonesAgregar">
+                            <Button type="submit" variant="primary">Edit</Button>
+                            <Button variant="secondary" onClick={handleCloseEdit}>
+                                Cancel
+                            </Button>
+                        </div>
+                        </Form>
                 </Modal.Body>
-                <Modal.Footer>
-                    <Button variant="secondary" onClick={handleCloseEdit}>
-                        Cancel
-                    </Button>
-                    <Button variant="primary" onClick={() => confirmEdit(editar)}>Edit</Button>
-                </Modal.Footer>
             </Modal>
         </div>
     );
